@@ -1,16 +1,18 @@
-# File:         komorebi.py
+# komorebi.py
+#
 # Author:       Daniel Choo
 # URL:          https://www.github.com/kyoogoo/komorebi
 #
-# Description:  d
+# Description:  donkey
 
 import discord
 from discord.ext import commands
 from secret import BOT_TOKEN
 
-# Initializing komorebi
+
+# Initializing akomorebi
 komorebi = commands.Bot(command_prefix=">", description="Just a lil baby bot.")
-extensions = ["weirdchamp", "utility"]
+extensions = ["weirdchamp", "utility", "tools"]
 
 if __name__ == '__main__':
     """ __main__:
@@ -18,9 +20,14 @@ if __name__ == '__main__':
 
         Return(s):    None [None]
     """
+    # Initializing our Tools object.
+    
+    # Load in our extensions.
     for ext in extensions:
+        # Attempt loading in our extension.
         try:
-            komorebi.load_extension("src.cogs."+ext)
+            komorebi.load_extension("src."+ext)
+        # Print the error if unable to.
         except Exception as e:
             print(e)
 
@@ -32,7 +39,7 @@ async def on_ready():
         Return(s): donkey
     """
     # Printing credidentials
-    print("\nLogged in as")
+    print("\nLogged in as:")
     print(komorebi.user.name)
     print(komorebi.user.id)
     print("-------------")
@@ -40,4 +47,5 @@ async def on_ready():
     # Set komorebi's status
     await komorebi.change_presence(activity=discord.Game(name="PSA: stop the peg"), status=discord.Status.idle)
 
+# Execute the bot
 komorebi.run(BOT_TOKEN)

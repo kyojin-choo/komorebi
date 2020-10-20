@@ -4,10 +4,15 @@
 # Date:   10/18/20
 # URL:    https://www.github.com/kyoogoo/komorebi
 
+
+import sys
+import random
 import discord
+import requests
 from discord import File
 from discord.utils import get
 from discord.ext import commands
+from bs4 import BeautifulSoup as Soup
 
 
 class WeirdChamp(commands.Cog, name="misc"):
@@ -18,9 +23,7 @@ class WeirdChamp(commands.Cog, name="misc"):
             Return(s):   None [None]
         """
         self.komorebi = komorebi
-        self.y_respond = {"y": None, "Yes": None, 'yes': None}
-        self.n_respond = {"n": None, "No": None, "no": None}
-
+        
 
     @commands.command()
     async def peg(self, ctx, members: commands.Greedy[discord.Member]):
@@ -32,28 +35,32 @@ class WeirdChamp(commands.Cog, name="misc"):
         """
         # Initialize variables
         author = ctx.message.author.mention
+        auth_check = ctx.message.author.guild_permissions.administrator
         channel = ctx.message.channel
+        tools = self.komorebi.get_cog('tools')
 
         # Check if the role exists; if not: create it.
         if not get(ctx.guild.roles, name="Pegged"):
-            await ctx.send("Sorry, Pegged is not a role in the server. Would you like to create it? (y/n)")
+            # If the user is an admin, they can create the role.
+            if auth_check:
+                await ctx.send("Sorry, Pegged is not a role in the server. Would you like to create it? (y/n)")
 
-            # Check for user input: yes or no.
-            def check(msg):
-                return (msg.content in self.y_respond or msg.content in self.n_respond) and msg.channel == channel
+                # Confirm proper input from user.
+                msg = await tools.affirm(channel)
 
-            # Wait for proper user input...
-            msg = await self.komorebi.wait_for('message', check=check)
+                # If they want to create it, prepare for suffering...
+                if msg.content in tools.y_respond:
+                    await ctx.send("**Prepare for the Peggening...**")
+                    await ctx.guild.create_role(name="Pegged")
 
-            # If they want to create it, prepare for suffering...
-            if msg.content in self.y_respond:
-                await ctx.send("**Prepare for the Peggening...**")
-                await ctx.guild.create_role(name="Pegged")
+                # Else, they have saved themselves.
+                else:
+                    await ctx.send("*Prevented chaos.. Wise choice.*")
+                    return
 
-            # Else, they have saved themselves.
+            # If the user is not an admin, then they should not be able to create role.
             else:
-                await ctx.send("*Prevented chaos.. Wise choice.*")
-                return
+                await ctx.send("Sorry, the `Pegged` role does not exist on the server. \nPlease contact the admin to create the role or to run this command again.")
 
         # Iterate through all of the arguements
         for member in members:
@@ -64,10 +71,18 @@ class WeirdChamp(commands.Cog, name="misc"):
             if role in member.roles:
                 await ctx.send("This member has already been pegged")
 
-                # If not, then lets peg em'
+            # If not, then lets peg em'
             else:
+                # Let's scrape our album
+                embed = discord.Embed()
+                url = "https://ibb.co/album/1JPjtN"
+                html = requests.get(url)
+                soup = Soup(html.text, "lxml")
+                imgs = [img["src"] for img in soup.find_all("img")]
+                embed.set_image(url=imgs[random.randint(0, len(imgs)-1)])
+
+                await ctx.send(member.mention + " has been pegged by " + author, embed=embed)
                 await member.add_roles(role)
-                await ctx.send(member.mention + " has been pegged by " + author, file=File("peg.gif"))
 
 
     @commands.command()
@@ -93,6 +108,11 @@ class WeirdChamp(commands.Cog, name="misc"):
                 await ctx.send(member.mention + " has not been pegged yet.")
 
 
-# Initialize WeirdChamp!
-def setup(bot):
-    bot.add_cog(WeirdChamp(bot))
+def setup(komorebi):
+    """ setup():
+        Required for Discord Cogs.
+        
+        Return(s):    None [None]
+    """
+    # Adding our WeirdChamp cog to komorebi
+    komorebi.add_cog(WeirdChamp(komorebi))
