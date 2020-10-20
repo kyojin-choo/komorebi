@@ -4,7 +4,6 @@
 # Date:   10/18/20
 # URL:    https://www.github.com/kyoogoo/komorebi
 
-
 import sys
 import random
 import discord
@@ -23,7 +22,6 @@ class WeirdChamp(commands.Cog, name="misc"):
             Return(s):   None [None]
         """
         self.komorebi = komorebi
-        
 
     @commands.command()
     async def peg(self, ctx, members: commands.Greedy[discord.Member]):
@@ -83,7 +81,6 @@ class WeirdChamp(commands.Cog, name="misc"):
 
                 await ctx.send(member.mention + " has been pegged by " + author, embed=embed)
                 await member.add_roles(role)
-
 
     @commands.command()
     async def unpeg(self, ctx, members: commands.Greedy[discord.Member]):
