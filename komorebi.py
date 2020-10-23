@@ -1,9 +1,9 @@
-# komorebi.py
+# komorebi.py -- beep boop
 #
 # Author:       Daniel Choo
 # URL:          https://www.github.com/kyoogoo/komorebi
 #
-# Description:  donkey
+# Description:  The heart of our Discord bot.
 
 import discord
 from discord.ext import commands
@@ -20,8 +20,6 @@ if __name__ == '__main__':
 
         Return(s):    None [None]
     """
-    # Initializing our Tools object.
-    
     # Load in our extensions.
     for ext in extensions:
         # Attempt loading in our extension.
@@ -30,6 +28,7 @@ if __name__ == '__main__':
         # Print the error if unable to.
         except Exception as e:
             print(e)
+
 
 @komorebi.event
 async def on_ready():
