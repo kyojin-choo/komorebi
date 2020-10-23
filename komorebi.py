@@ -6,13 +6,15 @@
 # Description:  The heart of our Discord bot.
 
 import discord
+from progress.bar import IncrementalBar
 from discord.ext import commands
 from secret import BOT_TOKEN
 
 
 # Initializing akomorebi
 komorebi = commands.Bot(command_prefix=">", description="Just a lil baby bot.")
-extensions = ["weirdchamp", "utility", "tools"]
+extensions = ["weirdchamp", "utility", "watch","tools"]
+errors = []
 
 if __name__ == '__main__':
     """ __main__:
@@ -21,14 +23,22 @@ if __name__ == '__main__':
         Return(s):    None [None]
     """
     # Load in our extensions.
-    for ext in extensions:
-        # Attempt loading in our extension.
-        try:
-            komorebi.load_extension("src."+ext)
-        # Print the error if unable to.
-        except Exception as e:
-            print(e)
+    with IncrementalBar('\nLoading modules', max=len(extensions)) as bar:
+        for ext in extensions:
+            # Attempt loading in our extension.
+            try:
+                komorebi.load_extension("src."+ext)
+                bar.next()
 
+            # Print the error if unable to.
+            except Exception as e:
+                errors.append(e)      
+                bar.next()
+
+                
+    # Print out our errors.
+    for e in errors:
+        print(e)
 
 @komorebi.event
 async def on_ready():
@@ -42,7 +52,7 @@ async def on_ready():
     print(komorebi.user.name)
     print(komorebi.user.id)
     print("-------------")
-
+    
     # Set komorebi's status
     await komorebi.change_presence(activity=discord.Game(name="PSA: stop the peg"), status=discord.Status.idle)
 

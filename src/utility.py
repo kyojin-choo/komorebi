@@ -18,7 +18,7 @@ class Utility(commands.Cog, name="utils"):
             Initializes our bot and its utility commands.
 
             Return(s):    None [None]
-        """
+        """        
         self.komorebi = komorebi
 
     @commands.command()
@@ -40,13 +40,18 @@ class Utility(commands.Cog, name="utils"):
             Return(s):    None [None]
         """        
         # Initialize variables
+        curr = ctx.message.channel.id
         tools = self.komorebi.get_cog('tools')
-        curr = int(ctx.message.channel.id)
+        print(">clear has been invoked.", end=" ")
 
         # Check if we're muted in this channel.
-        if not tools.mute_check(curr):
+        if tools.mute_check(curr):
+            print("Muted in this channel ({}, {}).\n".format(ctx.message.channel.name, curr))
+            return
+
+        # We're muted :(
+        else:
             channel = ctx.message.channel
-            print(">clear has been invoked.")
             await ctx.send("Are you sure you want to purge 100 messages? (y/n)")
 
             # Confirm proper input from user.
@@ -54,16 +59,16 @@ class Utility(commands.Cog, name="utils"):
 
             # If they say "lets do it", lets do it.
             if msg.content in tools.y_respond:
+                print("Purging 100 messages...")
                 await channel.purge(limit=amount,check=None,bulk=True)
 
             # On second thought, lets not do it.
             else:
-                await ctx.send("Okay; I won't purge these messages.")
+                print("Aborted purge.")
+                await ctx.send("Okay, I won't purge these messages.")
 
-        # We're muted :(
-        else:
-            return
-
+        tools.pretty_print()
+        
     @commands.command()
     @commands.is_owner()
     async def mute(self, ctx):
@@ -73,19 +78,20 @@ class Utility(commands.Cog, name="utils"):
             Return(s):  None [None]
         """
         # Initialize variables
-        curr = int(ctx.message.channel.id)
-        print(">mute has been invoked.")
+        curr = ctx.message.channel.id
         tools = self.komorebi.get_cog('tools')
-
+        print(">mute has been invoked.", end=" ")
+        
         # We can't talk in here already
         if tools.mute_check(curr):
             #tools.DM(ctx.message.author, "This channel has already been muted.")
-            print("we've already been muted")
+            print("Muted in this channel ({}, {}).\n".format(ctx.message.channel.name, curr))
+            return
 
         # We can't talk in here anymore :(
         else:
-            # Add it to our dictionary.
-            tools.muted[curr] = None
+            # Add it to our list.
+            tools.muted.append(curr)
             check = tools.write_file(tools.mp, tools.muted)
 
             # Upon successful write, we won't talk anymore.
@@ -96,6 +102,8 @@ class Utility(commands.Cog, name="utils"):
             # Else, we messed up
             else:
                 await ctx.send("We made a fucky wucky.")
+        
+        tools.pretty_print()
 
     @commands.command()
     @commands.is_owner()
@@ -106,25 +114,28 @@ class Utility(commands.Cog, name="utils"):
             Return(s):  None [None]
         """
         # Initialize variables
-        curr = int(ctx.message.channel.id)
+        curr = ctx.message.channel.id
         tools = self.komorebi.get_cog('tools')
+        print(tools.muted)
         print(">unmute has been invoked.")
-
+        
         # If we are muted, lets unmute ourselves.
         if tools.mute_check(curr):
-            del tools.muted[curr]
+            temp = tools.muted.index(curr)
+            tools.muted.pop(temp)
             check = tools.write_file(tools.mp, tools.muted)
 
             # Upon successful write, we won't talk anymore.
             if check == 0:
                 await ctx.send("I'm free!")
-            # Else, we messed up
             else:
                 await ctx.send("We made a fucky wucky.")
 
         # Can't be unmuted if im not muted.
         else:
             await ctx.send("I'm not muted in here!")
+
+        tools.pretty_print()
         
     @commands.command()
     async def ping(self, ctx):
@@ -133,9 +144,19 @@ class Utility(commands.Cog, name="utils"):
 
             Return(s):  Print (str)
         """
-        latency = self.komorebi.latency
-        await ctx.send("The latency of the bot is " + str(latency) + "ms.")
+        curr = ctx.message.channel.id
+        tools = self.komorebi.get_cog('tools')
+        print(">ping has been invoked.", end=" ")
+                
+        # If we are muted, lets unmute ourselves.
+        if tools.mute_check(curr):
+            print("Muted in this channel ({}, {}).\n".format(ctx.message.channel.name, curr))
+            return
 
+        else:
+            latency = self.komorebi.latency
+            tools.pretty_print()
+            await ctx.send("The latency of the bot is " + str(latency) + "ms.")
 
 def setup(komorebi):
     """ setup():

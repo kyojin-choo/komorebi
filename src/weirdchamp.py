@@ -32,55 +32,65 @@ class WeirdChamp(commands.Cog, name="misc"):
             Return(s):  print statement (str)
         """
         # Initialize variables
-        author = ctx.message.author.mention
-        auth_check = ctx.message.author.guild_permissions.administrator
-        channel = ctx.message.channel
+        curr = ctx.message.channel.id
         tools = self.komorebi.get_cog('tools')
+        print(">peg @user has been invoked.", end=" ")
 
-        # Check if the role exists; if not: create it.
-        if not get(ctx.guild.roles, name="Pegged"):
-            # If the user is an admin, they can create the role.
-            if auth_check:
-                await ctx.send("Sorry, Pegged is not a role in the server. Would you like to create it? (y/n)")
+        # Check if we're muted!
+        if tools.mute_check(curr):
+            print("Muted in this channel ({}, {}).\n".format(ctx.message.channel.name, curr))
+            return
 
-                # Confirm proper input from user.
-                msg = await tools.affirm(channel)
+        else:
+            # Initialize vars.
+            author = ctx.message.author.mention
+            auth_check = ctx.message.author.guild_permissions.administrator
+            channel = ctx.message.channel
 
-                # If they want to create it, prepare for suffering...
-                if msg.content in tools.y_respond:
-                    await ctx.send("**Prepare for the Peggening...**")
-                    await ctx.guild.create_role(name="Pegged")
+            # Check if the role exists; if not: create it.
+            if not get(ctx.guild.roles, name="Pegged"):
+                # If the user is an admin, they can create the role.
+                if auth_check:
+                    await ctx.send("Sorry, Pegged is not a role in the server. Would you like to create it? (y/n)")
 
-                # Else, they have saved themselves.
+                    # Confirm proper input from user.
+                    msg = await tools.affirm(channel)
+
+                    # If they want to create it, prepare for suffering...
+                    if msg.content in tools.y_respond:
+                        await ctx.send("**Prepare for the Peggening...**")
+                        await ctx.guild.create_role(name="Pegged")
+
+                    # Else, they have saved themselves.
+                    else:
+                        await ctx.send("*Prevented chaos.. Wise choice.*")
+                        return
+
+                # If the user is not an admin, then they should not be able to create role.
                 else:
-                    await ctx.send("*Prevented chaos.. Wise choice.*")
-                    return
+                    await ctx.send("Sorry, the `Pegged` role does not exist on the server. \nPlease contact the admin to create the role or to run this command again.")
 
-            # If the user is not an admin, then they should not be able to create role.
-            else:
-                await ctx.send("Sorry, the `Pegged` role does not exist on the server. \nPlease contact the admin to create the role or to run this command again.")
+            # Iterate through all of the arguements
+            for member in members:
+                # Initialize variables...
+                role = discord.utils.get(member.guild.roles, name="Pegged")
 
-        # Iterate through all of the arguements
-        for member in members:
-            # Initialize variables...
-            role = discord.utils.get(member.guild.roles, name="Pegged")
+                # Check if they have the peg role...
+                if role in member.roles:
+                    await ctx.send("This member has already been pegged")
 
-            # Check if they have the peg role...
-            if role in member.roles:
-                await ctx.send("This member has already been pegged")
+                # If not, then lets peg em'
+                else:
+                    # Let's scrape our album
+                    embed = discord.Embed()
+                    html = requests.get("https://ibb.co/album/1JPjtN")
+                    soup = Soup(html.text, "lxml")
+                    imgs = [img["src"] for img in soup.find_all("img")]
+                    embed.set_image(url=imgs[random.randint(0, len(imgs)-1)])
 
-            # If not, then lets peg em'
-            else:
-                # Let's scrape our album
-                embed = discord.Embed()
-                url = "https://ibb.co/album/1JPjtN"
-                html = requests.get(url)
-                soup = Soup(html.text, "lxml")
-                imgs = [img["src"] for img in soup.find_all("img")]
-                embed.set_image(url=imgs[random.randint(0, len(imgs)-1)])
-
-                await ctx.send(member.mention + " has been pegged by " + author, embed=embed)
-                await member.add_roles(role)
+                    tools.pretty_print()
+                    await ctx.send(member.mention + " has been pegged by " + author, embed=embed)
+                    await member.add_roles(role)
 
     @commands.command()
     async def unpeg(self, ctx, members: commands.Greedy[discord.Member]):
@@ -90,20 +100,32 @@ class WeirdChamp(commands.Cog, name="misc"):
 
             Return(s):  Removal of the peg role, print (str)
         """
-        # Initializing variables
-        author = ctx.message.author.mention
+        # Initialize variables
+        curr = ctx.message.channel.id
+        tools = self.komorebi.get_cog('tools')
+        print(">unpeg has been invoked.", end=" ")
 
-        # Lets unpeg everyone ;-;
-        for member in members:
-            role = discord.utils.get(member.guild.roles, name="Pegged")
+        # Check if we're muted!        
+        if tools.mute_check(curr):
+            print("Muted in this channel ({}, {}).\n".format(ctx.message.channel.name, curr))
+            return
+        
+        else:
+            # Initializing variables
+            author = ctx.message.author.mention
 
-            if role in member.roles:
-                await member.remove_roles(role)
-                await ctx.send(member.mention + " has been unpegged by " + author)
+            # Lets unpeg everyone ;-;
+            for member in members:
+                role = discord.utils.get(member.guild.roles, name="Pegged")
 
-            else:
-                await ctx.send(member.mention + " has not been pegged yet.")
+                if role in member.roles:
+                    await member.remove_roles(role)
+                    await ctx.send(member.mention + " has been unpegged by " + author)
 
+                else:
+                    await ctx.send(member.mention + " has not been pegged yet.")
+
+        tools.pretty_print()
 
 def setup(komorebi):
     """ setup():

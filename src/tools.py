@@ -20,21 +20,29 @@ class Tools(commands.Cog, name="tools"):
         """
         # Initialize variables in object.
         self.komorebi = komorebi
-        self.y_respond = {"y": None, 'yes': None, "Yes": None}
-        self.n_respond = {"n": None, "no": None, "Yes": None}
+        self.y_respond = ["y", "yes", "Yes"]
+        self.n_respond = ["n", "no", "No"]
         self.mp = PurePath(Path("").absolute(), Path("etc/muted.json"))
 
         # Check if the file exists. Initialize muted dict
         if Path(self.mp).exists():
-            self.muted = self.read_file(self.mp)[0]
+            self.muted = self.read_file(self.mp)
         else:
-            self.muted = {}
-            self.write_file(self.mp, [self.muted])
+            self.muted = []
+            self.write_file(self.mp, self.muted)
 
         # @startup: Abort if we cannot read in our JSON.
         if self.rw_check(self.muted):
             sys.exit(-1)
 
+    def pretty_print(self):
+        """ pretty_print(self):
+            Literally just prints a new line... I just didn't want ugly print()'s at
+            the end of every function.
+
+            Return(s):  None [None]
+        """
+        print()
 
     def rw_check(self, rw):
         """ rw_check(self, rw (dict/int)):
@@ -42,18 +50,18 @@ class Tools(commands.Cog, name="tools"):
 
             Return(s):    T/F [bool]
         """
-        if isinstance(rw, dict):
+        if isinstance(rw, list):
             return False
         else:
             return True
 
     def mute_check(self, id):
         """ mute_check(self, id):
-            Ternary operator that returns boolean if the id is in our muted dict.
+            Ternary operator that returns boolean if the id is in our muted list.
 
             Return(s):    T/F [Bool]
         """
-        return True if id in self.muted.keys() else False
+        return True if id in self.muted else False
 
     async def affirm(self, channel):
         """ affirm(channel [discord.Context.Channel]):
